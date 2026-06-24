@@ -1,0 +1,17 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+
+# Rust files
+target/
+python/app/video_engine.*.so
+python/app/video_engine.*.pyd
+python/app/video_engine.*.dylib

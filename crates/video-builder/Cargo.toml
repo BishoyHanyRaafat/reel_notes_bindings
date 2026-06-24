@@ -1,0 +1,8 @@
+[package]
+name = "video-builder"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+video-schema = { workspace = true }

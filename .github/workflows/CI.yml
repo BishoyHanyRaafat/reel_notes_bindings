@@ -1,0 +1,196 @@
+name: Native Bindings CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stubs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libfontconfig1-dev \
+            libfreetype6-dev
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install tools
+        run: |
+          pip install maturin uv ruff
+
+      - name: Generate stubs
+        run: |
+          make generate-stubs
+
+      - name: Collect stubs
+        run: |
+          mkdir -p artifact
+
+          find python/app \
+            -type f \
+            -name "*.pyi" \
+            -exec cp {} artifact/ \;
+
+      - name: Upload stubs
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-stubs
+          path: artifact
+
+  bindings:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          # manylinux
+          - os: ubuntu-22.04
+            target: x86_64
+            artifact_name: linux-x86_64
+            manylinux: auto
+
+          - os: ubuntu-22.04
+            target: x86
+            artifact_name: linux-x86
+            manylinux: auto
+
+          - os: ubuntu-22.04
+            target: aarch64
+            artifact_name: linux-aarch64
+            manylinux: auto
+
+          - os: ubuntu-22.04
+            target: armv7
+            artifact_name: linux-armv7
+            manylinux: auto
+
+          - os: ubuntu-22.04
+            target: s390x
+            artifact_name: linux-s390x
+            manylinux: auto
+
+          - os: ubuntu-22.04
+            target: ppc64le
+            artifact_name: linux-ppc64le
+            manylinux: auto
+
+          # musllinux
+          - os: ubuntu-22.04
+            target: x86_64
+            artifact_name: musllinux-x86_64
+            manylinux: musllinux_1_2
+
+          - os: ubuntu-22.04
+            target: x86
+            artifact_name: musllinux-x86
+            manylinux: musllinux_1_2
+
+          - os: ubuntu-22.04
+            target: aarch64
+            artifact_name: musllinux-aarch64
+            manylinux: musllinux_1_2
+
+          - os: ubuntu-22.04
+            target: armv7
+            artifact_name: musllinux-armv7
+            manylinux: musllinux_1_2
+
+          # macOS
+          - os: macos-latest
+            target: aarch64
+            artifact_name: macos-aarch64
+
+          # Windows
+          - os: windows-latest
+            target: x64
+            python_arch: x64
+            artifact_name: windows-x64
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          architecture: ${{ matrix.python_arch || 'x64' }}
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter
+          manylinux: ${{ matrix.manylinux }}
+
+      - name: Install native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libfontconfig1-dev \
+            libfreetype6-dev
+
+      - name: Extract Unix bindings
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p artifact
+
+          python << 'PY'
+          import pathlib
+          import zipfile
+
+          wheel = next(pathlib.Path("dist").glob("*.whl"))
+
+          with zipfile.ZipFile(wheel) as z:
+              z.extractall("wheel_extract")
+          PY
+
+          find wheel_extract \
+            -type f \
+            -name "*.so" \
+            -exec cp {} artifact/ \;
+
+      - name: Extract Windows bindings
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifact
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $wheel = Get-ChildItem dist\*.whl | Select-Object -First 1
+
+          [System.IO.Compression.ZipFile]::ExtractToDirectory(
+            $wheel.FullName,
+            "wheel_extract"
+          )
+
+          Get-ChildItem wheel_extract -Recurse -Include *.pyd |
+            Copy-Item -Destination artifact
+
+      - name: Upload bindings
+        uses: actions/upload-artifact@v6
+        with:
+          name: bindings-${{ matrix.artifact_name }}
+          path: artifact
+
+      - name: Upload Get-ChildItem
+        run: cargo build --release -p cli
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.artifact_name }}
+          path: target/release/cli${{ contains(matrix.target, 'windows') && '.exe' || '' }}

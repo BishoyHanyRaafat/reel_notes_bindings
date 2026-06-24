@@ -1,0 +1,26 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "cli"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { version = "4.6", features = ["derive"] }
+animations = { workspace = true }
+futures = { workspace = true }
+video-builder = { workspace = true }
+timing = { workspace = true }
+renderer = { workspace = true }
+serde_json.workspace = true
+thiserror = { workspace = true }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tts-client = { workspace = true }
+video-language = { workspace = true }
+video-schema = { workspace = true }
+encoder = {workspace=true}

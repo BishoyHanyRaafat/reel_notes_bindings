@@ -1,0 +1,33 @@
+[project]
+name = "video_engine"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Programming Language :: Rust",
+]
+dependencies = ["maturin-import-hook>=0.3.0"]
+dynamic = ["version"]
+
+[dependency-groups]
+dev = ["maturin>=1.13.2"]
+
+[build-system]
+requires = ["maturin>=1.13,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+bindings = "python-bindings"
+manifest-path = "crates/python-bindings/Cargo.toml"
+module-name = "app.video_engine"
+python-source = "python"
+
+[tool.pyright]
+extraPaths = ["python"]
+
+[tool.ruff]
+exclude = [
+  "python/app/video_engine.*.so",
+  "python/app/video_engine.*.pyd",
+  "python/app/video_engine.*.dylib",
+]

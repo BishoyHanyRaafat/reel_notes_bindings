@@ -1,0 +1,15 @@
+[package]
+name = "renderer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+animations = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+video-schema = { path = "../video-schema" }
+
+# Skia bindings — skia-safe wraps the official Skia C++ library.
+# It downloads and compiles Skia on first build (can be slow).
+# Set SKIA_LIBRARY_DIR to point to a pre-built Skia if needed.
+skia-safe = { version = "0.75", features = ["textlayout"] }

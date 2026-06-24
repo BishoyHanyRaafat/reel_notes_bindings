@@ -1,0 +1,19 @@
+[package]
+name = "python-bindings"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+pyo3 = { workspace = true }
+animations = { workspace = true }
+encoder = { workspace = true }
+renderer = { workspace = true }
+timing = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tts-client = { workspace = true }
+video-builder = { workspace = true }
+video-language = { workspace = true }
+video-schema = { workspace = true }

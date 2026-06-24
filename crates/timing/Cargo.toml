@@ -1,0 +1,8 @@
+[package]
+name = "timing"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tts-client = { workspace = true }
+video-schema = { workspace = true }

@@ -1,0 +1,7 @@
+[package]
+name = "video-language"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+video-schema = { workspace = true }
